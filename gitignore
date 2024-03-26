@@ -1,0 +1,7 @@
+astro_cleaning/__pycache__
+*azurite*
+venv
+build
+input
+output/*
+!output/
