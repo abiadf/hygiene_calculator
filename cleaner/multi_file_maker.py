@@ -2,8 +2,9 @@
 import csv
 from dataclasses import dataclass
 import os
-import openpyxl
+# import openpyxl
 import numpy as np
+import pandas as pd
 from sys import exit
 
 import config_info_obtainer as ci
@@ -13,11 +14,12 @@ from logging_maker import logger
 from phase_identifier import PrerinsePostmilkflushFinder, Blowout, PostRinseFinder, LowCZoneMaskHandler, EarlyCmaxHandler, LowCZoneAndHotrinseFinder
 # from phase_identifier_results import ResultingPhases
 from run_tempKPI_derivative import run_data_cleaning_temperature_and_derivative_classes
-from utils import ColumnFinder
+from utils import ColumnFinder, are_we_using_DBX
 
 
 list_of_input_file_names = InputCSVFilesSolutionObtainer.obtain_input_file_names()
 
+df_table = pd.DataFrame(columns= ['File name', 'Day of measurement', 'Start of post-milk flush [RT]', 'Start of pre-rinse [RT]', 'Start of hot rinse [RT]', 'Time for max T [RT]', 'Start of post-rinse [RT]', 'Start of low-C zone [RT]', 'Duration of low-C zone [s]', 'Max T [C]', f"Avg. T of {ci.Constants.time_interval}s interval with highest T [C]", f"Duration for which T>{ci.Constants.T_crit}C [s]", 'Avg. C for hot rinse (with water) [mS/cm]', 'Avg. C for hot rinse (no water) [mS/cm]', 'Avg. C for hot rinse (no water) [%]', 'Blowout duration [s]', 'Solution type',])
 
 for input_filename in list_of_input_file_names:
     solution_type = InputCSVFilesSolutionObtainer.obtain_solution_type_from_filename(input_filename, ci.config_info)
@@ -150,13 +152,31 @@ for input_filename in list_of_input_file_names:
     # free_row_number   = excel_sheet_maker.find_available_row()
     # excel_sheet_maker.fill_row_with_values(free_row_number)
     # excel_sheet_maker.make_excel_workbook(excel_file)
-    print("+++++++++++++++++++++++++++++++++++++")
-    output_file_name = 'output.csv'
-    # csv_file_maker   = csvFileMaker(output_file_name, resulting_phases, input_filename)
-    csv_file_maker   = csvFileMaker(output_file_name, resulting_phases, input_filename, temp_abs_extrema, var_instance, solution_type)
-    csv_file_maker.create_empty_csv_if_nonexistent()
-    csv_file_maker.check_if_header_row_filled()
-    csv_file_maker.fill_header()
-    csv_file_maker.write_to_csv_file()
-    print("=======================================")
+    
+    if are_we_using_DBX == 0:
+        print("+++++++++++++++++++++++++++++++++++++")
+        output_file_name = 'output.csv'
+        # csv_file_maker   = csvFileMaker(output_file_name, resulting_phases, input_filename)
+        csv_file_maker   = csvFileMaker(output_file_name, resulting_phases, input_filename, temp_abs_extrema, var_instance, solution_type)
+        csv_file_maker.create_empty_csv_if_nonexistent()
+        csv_file_maker.check_if_header_row_filled()
+        csv_file_maker.fill_header()
+        csv_file_maker.write_to_csv_file()
+        print("=======================================")
+    else:
+        df_table = df_table.append([
+        input_filename,
+        # resulting_phases.file_name, 
+        resulting_phases.post_milk_flush_time.strftime('%Y-%m-%d'),
+        resulting_phases.post_milk_flush_time.time(), resulting_phases.prerinse_time,
+        resulting_phases.hot_rinse_time.time(), var_instance.T_max_time.time(),
+        resulting_phases.postrinse_time.time(), resulting_phases.low_C_zone_start_time.time(),
+        resulting_phases.zone_duration_s, var_instance.T_max,
+        temp_abs_extrema['T of max time interval [C]'],
+        temp_abs_extrema['Duration for which T > T_crit [s]'],
+        resulting_phases.rinse_KPIs['C_avg hot rinse [mS/cm]'],
+        resulting_phases.rinse_KPIs['C_avg hot rinse, no water [mS/cm]'],
+        resulting_phases.rinse_KPIs['C_avg hot rinse, no water [%]'],
+        resulting_phases.blowout_duration, solution_type])
 
+    # add to a dataframe and when finished post it as delta table

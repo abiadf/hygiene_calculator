@@ -3,8 +3,15 @@
 import os
 import pandas as pd
 
-os.system('cls')
-pd.set_option('future.no_silent_downcasting', True) # prevents issues with future pd versions
+# finds location of file being run (main.py)
+try:
+    main_py_dir = os.path.dirname(os.path.abspath(__file__))
+except:
+    main_py_dir = os.getcwd()
+os.chdir(main_py_dir) # Change working directory to directory of main.py
+
+# os.system('cls')
+# pd.set_option('future.no_silent_downcasting', True) # prevents issues with future pd versions
 
 # %% #1 - Extracting info from config file
 

@@ -1,6 +1,24 @@
 
+import os
 import numpy as np
 from constants import DfConstants
+
+
+def check_are_we_using_DBX():
+    '''Function that finds if we are using Databricks
+    OUTPUT: are_we_using_DBX: 0 (no DataBricks) 1 (using DataBricks)'''
+
+    are_we_using_DBX = 0
+
+    if 'DATABRICKS_RUNTIME_VERSION' in os.environ:
+        print('We are using DataBricks')
+        are_we_using_DBX = 1
+    else:
+        print('We are not using DataBricks')
+
+    return are_we_using_DBX
+
+are_we_using_DBX = check_are_we_using_DBX()
 
 
 class ColumnFinder:

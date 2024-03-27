@@ -2,7 +2,7 @@
 import csv
 from dataclasses import dataclass
 import os
-import openpyxl
+# import openpyxl
 
 import config_info_obtainer as ci
 from logging_maker import logger
